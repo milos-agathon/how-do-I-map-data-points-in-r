@@ -19,8 +19,8 @@ if (any(installed_libs == F)) {
 invisible(lapply(libs, library, character.only = T))
 
 
-# DATA
-#-----
+### 1) DATA WRANGLING
+### -----------------
 file_name <- "geonames-population-1000.csv"
 ### get Geonames table on places with population >= 1000
 get_geonames_data <- function() {
@@ -43,13 +43,12 @@ load_geonames_data <- function() {
 
 places_df <- load_geonames_data()
 
-head(places_df)
+head(places_df) # inspect the first few rows of the table
+names(places_df) # inspect table names
 
-names(places_df)
-
-places_modified_df <- places_df[, c(2, 7, 14, 20)]
+places_modified_df <- places_df[, c(2, 7, 14, 20)] # select town name, country code, population and coordinates
 names(places_modified_df) <-
-    c("name", "country_code", "pop", "coords")
+    c("name", "country_code", "pop", "coords") # rename columns
 
 head(places_modified_df)
 
@@ -64,11 +63,11 @@ places_clean_df <- places_modified_df |>
 
 head(places_clean_df)
 
-
 # define longlat projection
 crsLONGLAT <-
     "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
+# transform data frame into sf object
 places_sf <- places_modified_df |>
     sf::st_as_sf(
         coords = c("long", "lat"),
@@ -78,14 +77,17 @@ places_sf <- places_modified_df |>
 places_sf
 
 
+### 2) BASIC MAPPING
+### -----------------
 
+# all towns
 ggplot() +
     geom_sf(
         data = places_sf,
         color = "#7d1d53", fill = "#7d1d53"
     )
 
-
+# filter UK towns
 ggplot() +
     geom_sf(
         data = dplyr::filter(
@@ -95,9 +97,11 @@ ggplot() +
         color = "#7d1d53", fill = "#7d1d53"
     )
 
-https://www.iban.com/country-codes
+### ISO2 codes: https://www.iban.com/country-codes
 
-
+### 3) POINTS WITHIN POLYGON
+### -----------------------
+# get UK national shapefile
 uk <- giscoR::gisco_get_countries(
     resolution = "1",
     country = "GBR"
@@ -106,14 +110,13 @@ uk <- giscoR::gisco_get_countries(
 
 plot(uk)
 
-
-
+# points within polygon with sf
 uk_places <- sf::st_intersection(
     places_sf, uk)
 
 plot(sf::st_geometry(uk_places))
 
-
+# alpha value
 ggplot() +
     geom_sf(
         data = uk_places,
@@ -126,6 +129,8 @@ ggplot() +
         breaks = scales::pretty_breaks(n=6)
         )
 
+### 4) LABELING
+### ------------
 # METHOD 1
 uk_labeled_places <- places_clean_df |>
     dplyr::filter(
@@ -152,7 +157,7 @@ uk_labeled_places <- uk_places |>
 
 head(uk_labeled_places)
 
-
+# FINAL MAP
 ggplot() +
     geom_sf(
         data = uk,
