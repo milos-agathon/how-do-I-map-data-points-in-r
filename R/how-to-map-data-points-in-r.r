@@ -68,7 +68,7 @@ crsLONGLAT <-
     "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
 # transform data frame into sf object
-places_sf <- places_modified_df |>
+places_sf <- places_clean_df |>
     sf::st_as_sf(
         coords = c("long", "lat"),
         crs = crsLONGLAT
